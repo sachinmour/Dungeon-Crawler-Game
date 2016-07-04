@@ -8,6 +8,7 @@ var player = 2;
 var life = 3;
 var enemy = 4;
 var weapon = 5;
+var gate = 6;
 var weapons = ["Basic sword", "Blade", "Sabre", "Spear", "Whip", "Keris", "Balmung", "Trident", "Lava whip"];
 
 var getRandom = (min, max) => {
@@ -23,7 +24,8 @@ class Board extends React.Component {
             attack: getRandom(5, 10),
             level: 1,
             weapon: weapons[0],
-            XP: 0
+            XP: 0,
+            dungeon: 1
         };
         this.playerPosition;
         this.grid;
@@ -55,6 +57,11 @@ class Board extends React.Component {
         this.placeObject(enemy, getRandom(4, 8));
         this.placeObject(life, getRandom(2, 5));
         this.placeObject(weapon, 1);
+        this.placeObject(gate, 1);
+        this.drawSquares();
+    }
+
+    drawSquares() {
         for (var j = 0; j < boardSide; j++) {
             var x = j * gridSide;
             for (var k = 0; k < boardSide; k++) {
@@ -69,6 +76,8 @@ class Board extends React.Component {
                         this.ctx.fillStyle = "#f00";
                     } else if (this.grid[j][k] === 5) {
                         this.ctx.fillStyle = "#b27300";
+                    } else if (this.grid[j][k] === 6) {
+                        this.ctx.fillStyle = "#8B008B";
                     }
                     this.ctx.fillRect(x, y, gridSide, gridSide);
                     this.ctx.fillStyle = "#fff";
@@ -196,6 +205,62 @@ class Board extends React.Component {
         }
     }
 
+    fightEnemy() {
+        var _this = this;
+        _this.setState({
+            health: _this.state.health - getRandom(5, 10)
+        });
+        if (getRandom(0, 10) <= 6 + (_this.state.level - _this.state.attack / (10 * _this.state.level))) {
+            return true;
+        }
+        _this.setState({
+            XP: _this.state.XP + getRandom(10, 15)
+        }, function() {
+            _this.setState({
+                level: 1 + Math.floor(_this.state.XP / 50)
+            });
+        });
+        return false;
+    }
+
+    increaseHealth() {
+        var _this = this;
+        _this.setState({
+            health: _this.state.health + getRandom(10, 15) * _this.state.level
+        });
+    }
+
+    getWeapon() {
+        var _this = this;
+        _this.setState({
+            weapon: weapons[_this.state.level],
+            attack: _this.state.attack + getRandom(10, 15)
+        });
+    }
+
+    nextLevel() {
+        var _this = this;
+        this.rooms = [];
+        this.grid = this.createArray(boardSide);
+        this.ctx.clearRect(0, 0, canvasSide, canvasSide);
+        this.ctx.fillStyle = "#fff";
+        this.placeRoom();
+        this.placeObject(player, 1);
+        this.placeObject(enemy, getRandom(4, 8));
+        this.placeObject(life, getRandom(2, 5));
+        this.placeObject(weapon, 1);
+        _this.setState({
+            dungeon: _this.state.dungeon + 1
+        }, _this.finalLevel.bind(_this));
+        this.drawSquares();
+    }
+
+    finalLevel() {
+        if (this.state.dungeon < 4) {
+            this.placeObject(gate, 1);
+        }
+    }
+
     handleMove(dir) {
         var _this = this;
         var position = this.playerPosition;
@@ -206,22 +271,24 @@ class Board extends React.Component {
                 }
                 switch (this.grid[position.x][position.y - 1]) {
                     case 4:
-                        _this.setState({
-                            health: _this.state.health - getRandom(5, 10)
-                        });
-                        if (getRandom(0, 10) <= 6 + (_this.state.level - _this.state.attack / (10 * _this.state.level))) {
+                        if (_this.fightEnemy()) {
                             break;
                         }
                         _this.move("up");
                         break;
                     case 3:
-                        _this.setState({
-                            health: _this.state.health + getRandom(10, 15) * _this.state.level
-                        });
+                        _this.increaseHealth();
                         _this.move("up");
                         break;
                     case 1:
                         _this.move("up");
+                        break;
+                    case 5:
+                        _this.getWeapon();
+                        _this.move("up");
+                        break;
+                    case 6:
+                        _this.nextLevel();
                         break;
                 }
                 break;
@@ -231,22 +298,24 @@ class Board extends React.Component {
                 }
                 switch (this.grid[position.x - 1][position.y]) {
                     case 4:
-                        _this.setState({
-                            health: _this.state.health - getRandom(5, 10)
-                        });
-                        if (getRandom(0, 10) <= 6 + (_this.state.level - _this.state.attack / (10 * _this.state.level))) {
+                        if (_this.fightEnemy()) {
                             break;
                         }
                         _this.move("left");
                         break;
                     case 3:
-                        _this.setState({
-                            health: _this.state.health + getRandom(10, 15) * _this.state.level
-                        });
+                        _this.increaseHealth();
                         _this.move("left");
                         break;
                     case 1:
                         _this.move("left");
+                        break;
+                    case 5:
+                        _this.getWeapon();
+                        _this.move("up");
+                        break;
+                    case 6:
+                        _this.nextLevel();
                         break;
                 }
                 break;
@@ -256,22 +325,24 @@ class Board extends React.Component {
                 }
                 switch (this.grid[position.x][position.y + 1]) {
                     case 4:
-                        _this.setState({
-                            health: _this.state.health - getRandom(5, 10)
-                        });
-                        if (getRandom(0, 10) <= 6 + (_this.state.level - _this.state.attack / (10 * _this.state.level))) {
+                        if (_this.fightEnemy()) {
                             break;
                         }
                         _this.move("down");
                         break;
                     case 3:
-                        _this.setState({
-                            health: _this.state.health + getRandom(10, 15) * _this.state.level
-                        });
+                        _this.increaseHealth();
                         _this.move("down");
                         break;
                     case 1:
                         _this.move("down");
+                        break;
+                    case 5:
+                        _this.getWeapon();
+                        _this.move("up");
+                        break;
+                    case 6:
+                        _this.nextLevel();
                         break;
                 }
                 break;
@@ -281,22 +352,24 @@ class Board extends React.Component {
                 }
                 switch (this.grid[position.x + 1][position.y]) {
                     case 4:
-                        _this.setState({
-                            health: _this.state.health - getRandom(5, 10)
-                        });
-                        if (getRandom(0, 10) <= 6 + (_this.state.level - _this.state.attack / (10 * _this.state.level))) {
+                        if (_this.fightEnemy()) {
                             break;
                         }
                         _this.move("right");
                         break;
                     case 3:
-                        _this.setState({
-                            health: _this.state.health + getRandom(10, 15) * _this.state.level
-                        });
+                        _this.increaseHealth();
                         _this.move("right");
                         break;
                     case 1:
                         _this.move("right");
+                        break;
+                    case 5:
+                        _this.getWeapon();
+                        _this.move("up");
+                        break;
+                    case 6:
+                        _this.nextLevel();
                         break;
                 }
                 break;
@@ -328,8 +401,13 @@ class Board extends React.Component {
                 <div id="canvas">
                     <canvas id="board" width="1000" height="1000"></canvas>
                 </div>
-                <div id="health">
-                    <p>{_this.state.health}</p>
+                <div id="stats">
+                    <p>Health: {_this.state.health}</p>
+                    <p>Attack: {_this.state.attack}</p>
+                    <p>Weapon: {_this.state.weapon}</p>
+                    <p>XP: {_this.state.XP}</p>
+                    <p>Level: {_this.state.level}</p>
+                    <p>Dungeon: {_this.state.dungeon}</p>
                 </div>
             </div>
         )

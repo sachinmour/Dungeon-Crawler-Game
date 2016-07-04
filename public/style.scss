@@ -90,6 +90,10 @@ div#canvas {
     }
 }
 
+div#stats {
+    display: flex;
+}
+
 div#boardSize,
 div#simSpeed {
     width: 65%;
