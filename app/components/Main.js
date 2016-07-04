@@ -2,9 +2,13 @@ import React from "react";
 var canvasSide = 1000;
 var gridSide = 10;
 var boardSide = 100;
-var minRoomSide = 12;
-var maxRoomSide = 24;
+var minRoomSide = 10;
+var maxRoomSide = 16;
 var player = 2;
+var life = 3;
+var enemy = 4;
+var weapon = 5;
+var weapons = ["Basic sword", "Blade", "Sabre", "Spear", "Whip", "Keris", "Balmung", "Trident", "Lava whip"];
 
 var getRandom = (min, max) => {
     return min + Math.floor(Math.random() * (max - min + 1));
@@ -15,9 +19,11 @@ class Board extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            start: true,
-            simSpeed: 250,
-            generation: 0
+            health: 100,
+            attack: getRandom(5, 10),
+            level: 1,
+            weapon: weapons[0],
+            XP: 0
         };
         this.playerPosition;
         this.grid;
@@ -38,35 +44,50 @@ class Board extends React.Component {
 
     componentDidMount() {
         var _this = this;
-        window.addEventListener('keydown', _this.navigate);
+        window.addEventListener('keydown', _this.navigate.bind(_this));
         this.c = document.getElementById('board');
         this.ctx = this.c.getContext('2d');
         this.grid = this.createArray(boardSide);
         this.ctx.clearRect(0, 0, canvasSide, canvasSide);
-        this.ctx.fillStyle = "#FF0000";
+        this.ctx.fillStyle = "#fff";
         this.placeRoom();
-        this.placeObject(player);
+        this.placeObject(player, 1);
+        this.placeObject(enemy, getRandom(4, 8));
+        this.placeObject(life, getRandom(2, 5));
+        this.placeObject(weapon, 1);
         for (var j = 0; j < boardSide; j++) {
             var x = j * gridSide;
             for (var k = 0; k < boardSide; k++) {
                 var y = k * gridSide;
-                if (this.grid[j][k] === 1) {
+                if (this.grid[j][k] > 0) {
+                    if (this.grid[j][k] === 2) {
+                        this.ctx.fillStyle = "#00f";
+                        this.playerPosition = { x: j, y: k };
+                    } else if (this.grid[j][k] === 3) {
+                        this.ctx.fillStyle = "#007f00";
+                    } else if (this.grid[j][k] === 4) {
+                        this.ctx.fillStyle = "#f00";
+                    } else if (this.grid[j][k] === 5) {
+                        this.ctx.fillStyle = "#b27300";
+                    }
                     this.ctx.fillRect(x, y, gridSide, gridSide);
-                } else if (this.grid[j][k] === 2) {
-                    this.ctx.fillStyle = "#0000FF";
-                    this.playerPosition = { x: j, y: k };
-                    this.ctx.fillRect(x, y, gridSide, gridSide);
-                    this.ctx.fillStyle = "#FF0000";
+                    this.ctx.fillStyle = "#fff";
                 }
             }
 
         }
     }
 
-    placeObject(objectValue) {
+    placeObject(objectValue, times) {
         var _this = this;
-        var room = this.rooms[getRandom(0, _this.rooms.length)];
-        this.grid[getRandom(room.x1, room.x2)][getRandom(room.y1, room.y2)] = objectValue;
+        for (var i = 0; i < times; i++) {
+            var room = this.rooms[getRandom(0, _this.rooms.length - 1)];
+            var x = getRandom(room.x1, room.x2);
+            var y = getRandom(room.y1, room.y2);
+            if (this.grid[x][y] !== 2) {
+                this.grid[x][y] = objectValue;
+            }
+        }
     }
 
     placeRoom() {
@@ -133,51 +154,150 @@ class Board extends React.Component {
         var position = this.playerPosition;
         switch (dir) {
             case "up":
-                if (this.grid[position.x][position.y - 1] === 1) {
-                    _this.ctx.clearRect(position.x * gridSide, (position.y - 1) * gridSide, gridSide, 2 * gridSide);
-                    _this.grid[position.x][position.y] = 1;
-                    _this.grid[position.x][position.y - 1] = 2;
-                    _this.playerPosition = { x: position.x, y: position.y - 1 };
-                    _this.ctx.fillStyle = "#f00";
-                    _this.ctx.fillRect(position.x * gridSide, position.y * gridSide, gridSide, gridSide);
-                    _this.ctx.fillStyle = "#00f";
-                    _this.ctx.fillRect(position.x * gridSide, (position.y - 1) * gridSide, gridSide, gridSide);
+                _this.ctx.clearRect(position.x * gridSide, (position.y - 1) * gridSide, gridSide, 2 * gridSide);
+                _this.grid[position.x][position.y] = 1;
+                _this.grid[position.x][position.y - 1] = 2;
+                _this.playerPosition = { x: position.x, y: position.y - 1 };
+                _this.ctx.fillStyle = "#fff";
+                _this.ctx.fillRect(position.x * gridSide, position.y * gridSide, gridSide, gridSide);
+                _this.ctx.fillStyle = "#00f";
+                _this.ctx.fillRect(position.x * gridSide, (position.y - 1) * gridSide, gridSide, gridSide);
+                break;
+            case "left":
+                _this.ctx.clearRect((position.x - 1) * gridSide, position.y * gridSide, gridSide * 2, gridSide);
+                _this.grid[position.x][position.y] = 1;
+                _this.grid[position.x - 1][position.y] = 2;
+                _this.playerPosition = { x: position.x - 1, y: position.y };
+                _this.ctx.fillStyle = "#fff";
+                _this.ctx.fillRect(position.x * gridSide, position.y * gridSide, gridSide, gridSide);
+                _this.ctx.fillStyle = "#00f";
+                _this.ctx.fillRect((position.x - 1) * gridSide, position.y * gridSide, gridSide, gridSide);
+                break;
+            case "down":
+                _this.ctx.clearRect(position.x * gridSide, position.y * gridSide, gridSide, 2 * gridSide);
+                _this.grid[position.x][position.y] = 1;
+                _this.grid[position.x][position.y + 1] = 2;
+                _this.playerPosition = { x: position.x, y: position.y + 1 };
+                _this.ctx.fillStyle = "#fff";
+                _this.ctx.fillRect(position.x * gridSide, position.y * gridSide, gridSide, gridSide);
+                _this.ctx.fillStyle = "#00f";
+                _this.ctx.fillRect(position.x * gridSide, (position.y + 1) * gridSide, gridSide, gridSide);
+                break;
+            case "right":
+                _this.ctx.clearRect(position.x * gridSide, position.y * gridSide, gridSide * 2, gridSide);
+                _this.grid[position.x][position.y] = 1;
+                _this.grid[position.x + 1][position.y] = 2;
+                _this.playerPosition = { x: position.x + 1, y: position.y };
+                _this.ctx.fillStyle = "#fff";
+                _this.ctx.fillRect(position.x * gridSide, position.y * gridSide, gridSide, gridSide);
+                _this.ctx.fillStyle = "#00f";
+                _this.ctx.fillRect((position.x + 1) * gridSide, position.y * gridSide, gridSide, gridSide);
+                break;
+        }
+    }
+
+    handleMove(dir) {
+        var _this = this;
+        var position = this.playerPosition;
+        switch (dir) {
+            case "up":
+                if (!(this.grid[position.x][position.y - 1] > 0)) {
+                    break;
+                }
+                switch (this.grid[position.x][position.y - 1]) {
+                    case 4:
+                        _this.setState({
+                            health: _this.state.health - getRandom(5, 10)
+                        });
+                        if (getRandom(0, 10) <= 6 + (_this.state.level - _this.state.attack / (10 * _this.state.level))) {
+                            break;
+                        }
+                        _this.move("up");
+                        break;
+                    case 3:
+                        _this.setState({
+                            health: _this.state.health + getRandom(10, 15) * _this.state.level
+                        });
+                        _this.move("up");
+                        break;
+                    case 1:
+                        _this.move("up");
+                        break;
                 }
                 break;
             case "left":
-                if (this.grid[position.x - 1][position.y] === 1) {
-                    _this.ctx.clearRect((position.x - 1) * gridSide, position.y * gridSide, gridSide * 2, gridSide);
-                    _this.grid[position.x][position.y] = 1;
-                    _this.grid[position.x - 1][position.y] = 2;
-                    _this.playerPosition = { x: position.x - 1, y: position.y };
-                    _this.ctx.fillStyle = "#f00";
-                    _this.ctx.fillRect(position.x * gridSide, position.y * gridSide, gridSide, gridSide);
-                    _this.ctx.fillStyle = "#00f";
-                    _this.ctx.fillRect((position.x - 1) * gridSide, position.y * gridSide, gridSide, gridSide);
+                if (position.x - 1 < 0 || !(this.grid[position.x - 1][position.y] > 0)) {
+                    break;
+                }
+                switch (this.grid[position.x - 1][position.y]) {
+                    case 4:
+                        _this.setState({
+                            health: _this.state.health - getRandom(5, 10)
+                        });
+                        if (getRandom(0, 10) <= 6 + (_this.state.level - _this.state.attack / (10 * _this.state.level))) {
+                            break;
+                        }
+                        _this.move("left");
+                        break;
+                    case 3:
+                        _this.setState({
+                            health: _this.state.health + getRandom(10, 15) * _this.state.level
+                        });
+                        _this.move("left");
+                        break;
+                    case 1:
+                        _this.move("left");
+                        break;
                 }
                 break;
             case "down":
-                if (this.grid[position.x][position.y + 1] === 1) {
-                    _this.ctx.clearRect(position.x * gridSide, position.y * gridSide, gridSide, 2 * gridSide);
-                    _this.grid[position.x][position.y] = 1;
-                    _this.grid[position.x][position.y + 1] = 2;
-                    _this.playerPosition = { x: position.x, y: position.y + 1 };
-                    _this.ctx.fillStyle = "#f00";
-                    _this.ctx.fillRect(position.x * gridSide, position.y * gridSide, gridSide, gridSide);
-                    _this.ctx.fillStyle = "#00f";
-                    _this.ctx.fillRect(position.x * gridSide, (position.y + 1) * gridSide, gridSide, gridSide);
+                if (!(this.grid[position.x][position.y + 1] > 0)) {
+                    break;
+                }
+                switch (this.grid[position.x][position.y + 1]) {
+                    case 4:
+                        _this.setState({
+                            health: _this.state.health - getRandom(5, 10)
+                        });
+                        if (getRandom(0, 10) <= 6 + (_this.state.level - _this.state.attack / (10 * _this.state.level))) {
+                            break;
+                        }
+                        _this.move("down");
+                        break;
+                    case 3:
+                        _this.setState({
+                            health: _this.state.health + getRandom(10, 15) * _this.state.level
+                        });
+                        _this.move("down");
+                        break;
+                    case 1:
+                        _this.move("down");
+                        break;
                 }
                 break;
             case "right":
-                if (this.grid[position.x + 1][position.y] === 1) {
-                    _this.ctx.clearRect(position.x * gridSide, position.y * gridSide, gridSide * 2, gridSide);
-                    _this.grid[position.x][position.y] = 1;
-                    _this.grid[position.x + 1][position.y] = 2;
-                    _this.playerPosition = { x: position.x + 1, y: position.y };
-                    _this.ctx.fillStyle = "#f00";
-                    _this.ctx.fillRect(position.x * gridSide, position.y * gridSide, gridSide, gridSide);
-                    _this.ctx.fillStyle = "#00f";
-                    _this.ctx.fillRect((position.x + 1) * gridSide, position.y * gridSide, gridSide, gridSide);
+                if (position.x + 1 > boardSide - 1 || !(this.grid[position.x + 1][position.y] > 0)) {
+                    break;
+                }
+                switch (this.grid[position.x + 1][position.y]) {
+                    case 4:
+                        _this.setState({
+                            health: _this.state.health - getRandom(5, 10)
+                        });
+                        if (getRandom(0, 10) <= 6 + (_this.state.level - _this.state.attack / (10 * _this.state.level))) {
+                            break;
+                        }
+                        _this.move("right");
+                        break;
+                    case 3:
+                        _this.setState({
+                            health: _this.state.health + getRandom(10, 15) * _this.state.level
+                        });
+                        _this.move("right");
+                        break;
+                    case 1:
+                        _this.move("right");
+                        break;
                 }
                 break;
         }
@@ -187,19 +307,17 @@ class Board extends React.Component {
         var _this = this;
         switch (e.keyCode) {
             case 38:
-                _this.move("up");
+                _this.handleMove("up");
                 break;
             case 37:
-                _this.move("left");
+                _this.handleMove("left");
                 break;
             case 40:
-                _this.move("down");
+                _this.handleMove("down");
                 break;
             case 39:
-                _this.move("right");
+                _this.handleMove("right");
                 break;
-            default:
-                console.log(e.keyCode);
         }
     }
 
@@ -209,6 +327,9 @@ class Board extends React.Component {
             <div id="content">
                 <div id="canvas">
                     <canvas id="board" width="1000" height="1000"></canvas>
+                </div>
+                <div id="health">
+                    <p>{_this.state.health}</p>
                 </div>
             </div>
         )
