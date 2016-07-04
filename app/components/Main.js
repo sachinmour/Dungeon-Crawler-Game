@@ -9,6 +9,7 @@ var life = 3;
 var enemy = 4;
 var weapon = 5;
 var gate = 6;
+var boss = 7;
 var weapons = ["Basic sword", "Blade", "Sabre", "Spear", "Whip", "Keris", "Balmung", "Trident", "Lava whip"];
 
 var getRandom = (min, max) => {
@@ -28,12 +29,13 @@ class Board extends React.Component {
             dungeon: 1
         };
         this.playerPosition;
+        this.initialState;
         this.grid;
-        this.copyGrid;
         this.ctx;
         this.c;
         this.rooms = [];
         this.frame;
+        this.bossPower = getRandom(200, 300);
     }
 
     createArray(rows) {
@@ -46,6 +48,7 @@ class Board extends React.Component {
 
     componentDidMount() {
         var _this = this;
+        this.initialState = Object.assign({}, this.state);
         window.addEventListener('keydown', _this.navigate.bind(_this));
         this.c = document.getElementById('board');
         this.ctx = this.c.getContext('2d');
@@ -72,7 +75,7 @@ class Board extends React.Component {
                         this.playerPosition = { x: j, y: k };
                     } else if (this.grid[j][k] === 3) {
                         this.ctx.fillStyle = "#007f00";
-                    } else if (this.grid[j][k] === 4) {
+                    } else if (this.grid[j][k] === 4 || this.grid[j][k] === 7) {
                         this.ctx.fillStyle = "#f00";
                     } else if (this.grid[j][k] === 5) {
                         this.ctx.fillStyle = "#b27300";
@@ -209,8 +212,8 @@ class Board extends React.Component {
         var _this = this;
         _this.setState({
             health: _this.state.health - getRandom(5, 10)
-        });
-        if (getRandom(0, 10) <= 6 + (_this.state.level - _this.state.attack / (10 * _this.state.level))) {
+        }, _this.checkFinish.bind(_this));
+        if (getRandom(0, 10) <= 6 + (_this.state.level - _this.state.attack / (10 * _this.state.dungeon))) {
             return true;
         }
         _this.setState({
@@ -255,9 +258,55 @@ class Board extends React.Component {
         this.drawSquares();
     }
 
+    placeBoss() {
+        var _this = this;
+        var room = this.rooms[getRandom(0, _this.rooms.length - 1)];
+        var x = getRandom(room.x1, room.x2);
+        var y = getRandom(room.y1, room.y2);
+        while (this.grid[x][y] !== 1 || this.grid[x - 1][y] !== 1 || this.grid[x][y - 1] !== 1 || this.grid[x - 1][y - 1] !== 1) {
+            room = this.rooms[getRandom(0, _this.rooms.length - 1)];
+            x = getRandom(room.x1, room.x2);
+            y = getRandom(room.y1, room.y2);
+        }
+        this.grid[x][y] = 7;
+        this.grid[x - 1][y] = 7;
+        this.grid[x - 1][y - 1] = 7;
+        this.grid[x][y - 1] = 7;
+
+    }
+
+    checkFinish() {
+        var _this = this;
+        if (this.state.health <= 0 || this.bossPower <= 0) {
+            this.setState(_this.initialState, function() {
+                _this.rooms = [];
+                _this.grid = this.createArray(boardSide);
+                _this.ctx.clearRect(0, 0, canvasSide, canvasSide);
+                _this.ctx.fillStyle = "#fff";
+                _this.placeRoom();
+                _this.placeObject(player, 1);
+                _this.placeObject(enemy, getRandom(4, 8));
+                _this.placeObject(life, getRandom(2, 5));
+                _this.placeObject(weapon, 1);
+                _this.placeObject(gate, 1);
+                _this.drawSquares();
+            });
+        }
+    }
+
+    fightBoss() {
+        var _this = this;
+        _this.bossPower -= _this.state.attack;
+        _this.setState({
+            health: _this.state.health - getRandom(20, 40)
+        }, _this.checkFinish.bind(_this));
+    }
+
     finalLevel() {
         if (this.state.dungeon < 4) {
             this.placeObject(gate, 1);
+        } else {
+            this.placeBoss();
         }
     }
 
@@ -290,6 +339,9 @@ class Board extends React.Component {
                     case 6:
                         _this.nextLevel();
                         break;
+                    case 7:
+                        _this.fightBoss();
+                        break;
                 }
                 break;
             case "left":
@@ -316,6 +368,9 @@ class Board extends React.Component {
                         break;
                     case 6:
                         _this.nextLevel();
+                        break;
+                    case 7:
+                        _this.fightBoss();
                         break;
                 }
                 break;
@@ -344,6 +399,9 @@ class Board extends React.Component {
                     case 6:
                         _this.nextLevel();
                         break;
+                    case 7:
+                        _this.fightBoss();
+                        break;
                 }
                 break;
             case "right":
@@ -370,6 +428,9 @@ class Board extends React.Component {
                         break;
                     case 6:
                         _this.nextLevel();
+                        break;
+                    case 7:
+                        _this.fightBoss();
                         break;
                 }
                 break;
