@@ -1,0 +1,168 @@
+$first: #000000;
+$second: #263248;
+$mid: #7E8AA2;
+$slast: #FFFFFF;
+$last: #FF9800;
+$tablet-width: 768px;
+$desktop-width: 1024px;
+$share-width: 990px;
+@mixin tablet {
+    @media (min-width: #{$tablet-width}) and (max-width: #{$desktop-width - 1px}) {
+        @content;
+    }
+}
+
+@mixin desktop {
+    @media (min-width: #{$desktop-width}) {
+        @content;
+    }
+}
+
+@mixin mobile {
+    @media (max-width: 768px) {
+        @content;
+    }
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: lighten($slast, 5);
+}
+
+div#app {
+    width: 100%;
+    min-height: 100vh;
+    color: black;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    background-color: lighten($second, 20);
+}
+
+div#content {
+    height: 100%;
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    div#controls {
+        width: 75%;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        background-color: lighten($mid, 3);
+        border-top-right-radius: 5px;
+        border-top-left-radius: 5px;
+        button.control {
+            background-color: $second;
+            color: white;
+            border: none;
+            padding: 5px 25px;
+            border-radius: 5px;
+            font-size: 1.5rem;
+            font-family: 'Lato', sans-serif;
+            &:active {
+                font-size: 0.9rem;
+            }
+        }
+        div p {
+            color: white;
+            font-size: 1.5rem;
+            min-width: 200px;
+            font-family: 'Lato', sans-serif;
+        }
+    }
+}
+
+div#canvas {
+    border: 1px solid lighten($mid, 3);
+    border-radius: 5px;
+    background-color: lighten($mid, 3);
+    display: flex;
+    canvas {
+        margin: auto;
+        background-color: black;
+    }
+}
+
+div#boardSize,
+div#simSpeed {
+    width: 65%;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background-color: lighten($mid, 3);
+    font-size: 1.5rem;
+    font-family: 'Lato', sans-serif;
+    color: white;
+}
+
+div#simSpeed {
+    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: 5px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+//slider
+input[type=range] {
+    -webkit-appearance: none;
+    height: 10px;
+    /* pick your own value */
+    padding: 0;
+    border-radius: 10px;
+    background-color: $second;
+    &:focus {
+        outline: none;
+    }
+    /* your slider styles */
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    box-sizing: content-box;
+    background-color: $slast;
+    height: 15px;
+    width: 15px;
+    border-radius: 10px;
+    /* your thumb styles */
+}
+
+input[type=range]::-moz-range-thumb {
+    /* again your thumb styles */
+    height: 15px;
+    width: 15px;
+    border-radius: 10px;
+}
+
+input[type=range]::-ms-thumb {
+    /* should come after -webkit- */
+    /* again your thumb styles */
+    /* may require different margins */
+    height: 15px;
+    width: 15px;
+    border-radius: 10px;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    /* your track styles */
+}
+
+input[type=range]::-moz-range-track {
+    /* again your track styles */
+}
+
+input[type=range]::-ms-track {
+    /* should come after -webkit- */
+    border-color: transparent;
+    color: transparent;
+    /* again your track styles */
+}
