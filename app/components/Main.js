@@ -4,6 +4,7 @@ var gridSide = 10;
 var boardSide = 100;
 var minRoomSide = 12;
 var maxRoomSide = 24;
+var player = 2;
 
 var getRandom = (min, max) => {
     return min + Math.floor(Math.random() * (max - min + 1));
@@ -18,6 +19,7 @@ class Board extends React.Component {
             simSpeed: 250,
             generation: 0
         };
+        this.playerPosition;
         this.grid;
         this.copyGrid;
         this.ctx;
@@ -35,22 +37,36 @@ class Board extends React.Component {
     }
 
     componentDidMount() {
+        var _this = this;
+        window.addEventListener('keydown', _this.navigate);
         this.c = document.getElementById('board');
         this.ctx = this.c.getContext('2d');
         this.grid = this.createArray(boardSide);
         this.ctx.clearRect(0, 0, canvasSide, canvasSide);
         this.ctx.fillStyle = "#FF0000";
         this.placeRoom();
+        this.placeObject(player);
         for (var j = 0; j < boardSide; j++) {
             var x = j * gridSide;
             for (var k = 0; k < boardSide; k++) {
+                var y = k * gridSide;
                 if (this.grid[j][k] === 1) {
-                    var y = k * gridSide;
                     this.ctx.fillRect(x, y, gridSide, gridSide);
+                } else if (this.grid[j][k] === 2) {
+                    this.ctx.fillStyle = "#0000FF";
+                    this.playerPosition = { x: j, y: k };
+                    this.ctx.fillRect(x, y, gridSide, gridSide);
+                    this.ctx.fillStyle = "#FF0000";
                 }
             }
 
         }
+    }
+
+    placeObject(objectValue) {
+        var _this = this;
+        var room = this.rooms[getRandom(0, _this.rooms.length)];
+        this.grid[getRandom(room.x1, room.x2)][getRandom(room.y1, room.y2)] = objectValue;
     }
 
     placeRoom() {
@@ -109,6 +125,81 @@ class Board extends React.Component {
             for (var y = y1; y <= y2; y++) {
                 this.grid[x][y] = 1;
             }
+        }
+    }
+
+    move(dir) {
+        var _this = this;
+        var position = this.playerPosition;
+        switch (dir) {
+            case "up":
+                if (this.grid[position.x][position.y - 1] === 1) {
+                    _this.ctx.clearRect(position.x * gridSide, (position.y - 1) * gridSide, gridSide, 2 * gridSide);
+                    _this.grid[position.x][position.y] = 1;
+                    _this.grid[position.x][position.y - 1] = 2;
+                    _this.playerPosition = { x: position.x, y: position.y - 1 };
+                    _this.ctx.fillStyle = "#f00";
+                    _this.ctx.fillRect(position.x * gridSide, position.y * gridSide, gridSide, gridSide);
+                    _this.ctx.fillStyle = "#00f";
+                    _this.ctx.fillRect(position.x * gridSide, (position.y - 1) * gridSide, gridSide, gridSide);
+                }
+                break;
+            case "left":
+                if (this.grid[position.x - 1][position.y] === 1) {
+                    _this.ctx.clearRect((position.x - 1) * gridSide, position.y * gridSide, gridSide * 2, gridSide);
+                    _this.grid[position.x][position.y] = 1;
+                    _this.grid[position.x - 1][position.y] = 2;
+                    _this.playerPosition = { x: position.x - 1, y: position.y };
+                    _this.ctx.fillStyle = "#f00";
+                    _this.ctx.fillRect(position.x * gridSide, position.y * gridSide, gridSide, gridSide);
+                    _this.ctx.fillStyle = "#00f";
+                    _this.ctx.fillRect((position.x - 1) * gridSide, position.y * gridSide, gridSide, gridSide);
+                }
+                break;
+            case "down":
+                if (this.grid[position.x][position.y + 1] === 1) {
+                    _this.ctx.clearRect(position.x * gridSide, position.y * gridSide, gridSide, 2 * gridSide);
+                    _this.grid[position.x][position.y] = 1;
+                    _this.grid[position.x][position.y + 1] = 2;
+                    _this.playerPosition = { x: position.x, y: position.y + 1 };
+                    _this.ctx.fillStyle = "#f00";
+                    _this.ctx.fillRect(position.x * gridSide, position.y * gridSide, gridSide, gridSide);
+                    _this.ctx.fillStyle = "#00f";
+                    _this.ctx.fillRect(position.x * gridSide, (position.y + 1) * gridSide, gridSide, gridSide);
+                }
+                break;
+            case "right":
+                if (this.grid[position.x + 1][position.y] === 1) {
+                    _this.ctx.clearRect(position.x * gridSide, position.y * gridSide, gridSide * 2, gridSide);
+                    _this.grid[position.x][position.y] = 1;
+                    _this.grid[position.x + 1][position.y] = 2;
+                    _this.playerPosition = { x: position.x + 1, y: position.y };
+                    _this.ctx.fillStyle = "#f00";
+                    _this.ctx.fillRect(position.x * gridSide, position.y * gridSide, gridSide, gridSide);
+                    _this.ctx.fillStyle = "#00f";
+                    _this.ctx.fillRect((position.x + 1) * gridSide, position.y * gridSide, gridSide, gridSide);
+                }
+                break;
+        }
+    }
+
+    navigate(e) {
+        var _this = this;
+        switch (e.keyCode) {
+            case 38:
+                _this.move("up");
+                break;
+            case 37:
+                _this.move("left");
+                break;
+            case 40:
+                _this.move("down");
+                break;
+            case 39:
+                _this.move("right");
+                break;
+            default:
+                console.log(e.keyCode);
         }
     }
 
