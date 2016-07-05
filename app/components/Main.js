@@ -26,7 +26,8 @@ class Board extends React.Component {
             level: 1,
             weapon: weapons[0],
             XP: 0,
-            dungeon: 1
+            dungeon: 1,
+            message: ""
         };
         this.playerPosition;
         this.initialState;
@@ -50,6 +51,7 @@ class Board extends React.Component {
         var _this = this;
         this.initialState = Object.assign({}, this.state);
         window.addEventListener('keydown', _this.navigate.bind(_this));
+        window.addEventListener('resize', _this.setCSS.bind(_this));
         this.c = document.getElementById('board');
         this.ctx = this.c.getContext('2d');
         this.grid = this.createArray(boardSide);
@@ -88,6 +90,31 @@ class Board extends React.Component {
             }
 
         }
+        this.setCSS();
+    }
+
+    setCSS() {
+        var position = this.playerPosition;
+        var div = document.getElementById("canvas");
+        var width = div.clientWidth;
+        var height = div.clientHeight;
+        var left = position.x * gridSide - width / 2;
+        this.c.style.left = "-" + Math.min(Math.max(0, left), 1000 - width) + "px";
+        var top = position.y * gridSide - height / 2;
+        this.c.style.top = "-" + Math.min(Math.max(0, top), 1000 - height) + "px";
+    }
+
+    togglew() {
+        var div = document.getElementById("canvas");
+        if (div.offsetWidth === 150) {
+            div.style.width = "100%";
+            div.style.flex = 1;
+        } else {
+            div.style.width = "150px";
+            div.style.height = "150px";
+            div.style.flex = 0;
+        }
+        this.setCSS();
     }
 
     placeObject(objectValue, times) {
@@ -174,6 +201,7 @@ class Board extends React.Component {
                 _this.ctx.fillRect(position.x * gridSide, position.y * gridSide, gridSide, gridSide);
                 _this.ctx.fillStyle = "#00f";
                 _this.ctx.fillRect(position.x * gridSide, (position.y - 1) * gridSide, gridSide, gridSide);
+                _this.setCSS();
                 break;
             case "left":
                 _this.ctx.clearRect((position.x - 1) * gridSide, position.y * gridSide, gridSide * 2, gridSide);
@@ -184,6 +212,7 @@ class Board extends React.Component {
                 _this.ctx.fillRect(position.x * gridSide, position.y * gridSide, gridSide, gridSide);
                 _this.ctx.fillStyle = "#00f";
                 _this.ctx.fillRect((position.x - 1) * gridSide, position.y * gridSide, gridSide, gridSide);
+                _this.setCSS();
                 break;
             case "down":
                 _this.ctx.clearRect(position.x * gridSide, position.y * gridSide, gridSide, 2 * gridSide);
@@ -194,6 +223,7 @@ class Board extends React.Component {
                 _this.ctx.fillRect(position.x * gridSide, position.y * gridSide, gridSide, gridSide);
                 _this.ctx.fillStyle = "#00f";
                 _this.ctx.fillRect(position.x * gridSide, (position.y + 1) * gridSide, gridSide, gridSide);
+                _this.setCSS();
                 break;
             case "right":
                 _this.ctx.clearRect(position.x * gridSide, position.y * gridSide, gridSide * 2, gridSide);
@@ -204,6 +234,7 @@ class Board extends React.Component {
                 _this.ctx.fillRect(position.x * gridSide, position.y * gridSide, gridSide, gridSide);
                 _this.ctx.fillStyle = "#00f";
                 _this.ctx.fillRect((position.x + 1) * gridSide, position.y * gridSide, gridSide, gridSide);
+                _this.setCSS();
                 break;
         }
     }
@@ -275,22 +306,45 @@ class Board extends React.Component {
 
     }
 
+    message(msg) {
+        var _this = this;
+        this.setState({
+            message: "You " + msg
+        });
+        setTimeout(function() {
+            _this.setState({
+                message: ""
+            });
+        }, 1500);
+    }
+
     checkFinish() {
         var _this = this;
         if (this.state.health <= 0 || this.bossPower <= 0) {
-            this.setState(_this.initialState, function() {
-                _this.rooms = [];
-                _this.grid = this.createArray(boardSide);
-                _this.ctx.clearRect(0, 0, canvasSide, canvasSide);
-                _this.ctx.fillStyle = "#fff";
-                _this.placeRoom();
-                _this.placeObject(player, 1);
-                _this.placeObject(enemy, getRandom(4, 8));
-                _this.placeObject(life, getRandom(2, 5));
-                _this.placeObject(weapon, 1);
-                _this.placeObject(gate, 1);
-                _this.drawSquares();
-            });
+            if (_this.state.health <= 0) {
+                this.setState({
+                    message: "You lost"
+                });
+            } else {
+                this.setState({
+                    message: "You won"
+                });
+            }
+            setTimeout(function() {
+                _this.setState(_this.initialState, function() {
+                    _this.rooms = [];
+                    _this.grid = _this.createArray(boardSide);
+                    _this.ctx.clearRect(0, 0, canvasSide, canvasSide);
+                    _this.ctx.fillStyle = "#fff";
+                    _this.placeRoom();
+                    _this.placeObject(player, 1);
+                    _this.placeObject(enemy, getRandom(4, 8));
+                    _this.placeObject(life, getRandom(2, 5));
+                    _this.placeObject(weapon, 1);
+                    _this.placeObject(gate, 1);
+                    _this.drawSquares();
+                });
+            }, 500);
         }
     }
 
@@ -459,9 +513,7 @@ class Board extends React.Component {
         var _this = this;
         return (
             <div id="content">
-                <div id="canvas">
-                    <canvas id="board" width="1000" height="1000"></canvas>
-                </div>
+                <p id="result">{this.state.message}</p>
                 <div id="stats">
                     <p>Health: {_this.state.health}</p>
                     <p>Attack: {_this.state.attack}</p>
@@ -469,6 +521,10 @@ class Board extends React.Component {
                     <p>XP: {_this.state.XP}</p>
                     <p>Level: {_this.state.level}</p>
                     <p>Dungeon: {_this.state.dungeon}</p>
+                    <p onClick={(e) => _this.togglew()}>Toggle Darkness</p>
+                </div>
+                <div id="canvas">
+                    <canvas id="board" width="1000" height="1000"></canvas>
                 </div>
             </div>
         )
